@@ -24,7 +24,7 @@ class filter(generator):
                 if self.__function(item): return item
                 else: continue
 
-def map(function, iterable, *iterables):
+def map(function: Callable[[T], Any], iterable: Iterable[T], *iterables: Tuple[Iterable[T]]):
     if len(iterables) == 0:
         for item in iterable:
             try: 
