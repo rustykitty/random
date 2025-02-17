@@ -3,8 +3,10 @@ Python implementations of functions for iterables without using list comprehensi
 """
 
 from typing import (
-    Any, Callable, Iterable, Iterator
+    Any, Callable, Iterable, Iterator, Tuple, TypeVar
 )
+
+T = TypeVar('T')
 
 class generator(Iterator):
     def __iter__(self): return self
@@ -12,7 +14,7 @@ class generator(Iterator):
 
 class filter(generator):
 
-        def __init__(self, function: Callable[[Any], Any], iterable: Iterable):
+        def __init__(self, function: Callable[[T], bool], iterable: Iterable[T]):
             self.__function = function
             self.__iterator = iter(iterable)
 
@@ -30,21 +32,26 @@ def map(function, iterable, *iterables):
             except StopIteration: 
                 return
     else:
-        iterators = map(iter, iterables)
-        yield function(*map(next, iterators))
+        iterators = tuple(map(iter, (iterable,) + iterables))
+        while True:
+            try:
+                t = tuple(map(next, iterators))
+                if (len(t) != len(iterators)): return
+                yield function(*t)
+            except StopIteration:
+                return
 
 # this is zip with strict=False
-def zip(*iterables):
+def zip(*iterables: Tuple[Iterable[Any]]):
     iterators = tuple(map(lambda it: iter(it), iterables))
 
     while True:
-        m = map(next, iterators)
-        print(m)
-        t = tuple(m)
-        assert t != ()
+        t = tuple(map(next, iterators))
+        if len(t) != len(iterators):
+            return
         yield t
 
-def reduce(function, iterable, initial=None):
+def reduce(function: Callable[[T], Any], iterable: Iterable[T], initial: T | None = None):
     iterator = iter(iterable)
     if initial is None:
         res = next(iterator)
@@ -54,7 +61,7 @@ def reduce(function, iterable, initial=None):
         res = function(res, item)
     return res
 
-def accumulate(function, iterable, initial=None):
+def accumulate(function: Callable[[T], Any], iterable: Iterable[T], initial: T | None = None):
     iterator = iter(iterable)
     if initial is None:
         res = next(iterator)
@@ -65,7 +72,7 @@ def accumulate(function, iterable, initial=None):
         res = function(res, item)
         yield res
 
-def flatten(iterable):
+def flatten(iterable: Iterable[Any]):
     for item in iterable:
         if isinstance(item, Iterable):
             yield from item
