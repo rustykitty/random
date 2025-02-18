@@ -2,6 +2,8 @@
 Python implementations of functions for iterables without using list comprehensions or stuff like that
 """
 
+# from __future__ import annotations
+
 from typing import (
     Any, Callable, Iterable, Iterator, Tuple, TypeVar
 )
@@ -24,22 +26,43 @@ class filter(generator):
                 if self.__function(item): return item
                 else: continue
 
-def map(function: Callable[[T], Any], iterable: Iterable[T], *iterables: Tuple[Iterable[T]]):
-    if len(iterables) == 0:
-        for item in iterable:
-            try: 
-                yield function(item)
-            except StopIteration: 
-                return
-    else:
-        iterators = tuple(map(iter, (iterable,) + iterables))
-        while True:
-            try:
-                t = tuple(map(next, iterators))
-                if (len(t) != len(iterators)): return
-                yield function(*t)
-            except StopIteration:
-                return
+class map(generator):
+
+    def __new__(cls, 
+                function: Callable[[T], Any], 
+                iterable: Iterable[T], 
+                *iterables: Tuple[Iterable[T]]
+                ):
+        if len(iterables) == 0:
+            return _map_single(function, iterable, *iterables)
+        else:
+            return _map_multiple(function, iterable, *iterables)
+
+class _map_single(map):
+
+    def __init__(self, function: Callable[[T], Any], iterable: Iterable[T]):
+        self.function = function
+        self.iterator = iter(iterable)
+
+    def __next__(self):
+        return self.function(next(self.iterator))
+
+    def __new__(cls, *args):
+        return object.__new__(cls)
+
+class _map_multiple(map):
+
+    def __init__(self, function: Callable[[T], Any], *iterables: Tuple[Iterable[T]]):
+        self.function = function
+        self.iterators = tuple(_map_single(iter, iterables))
+
+    def __next__(self):
+        t = tuple(_map_single(next, self.iterators))
+        if len(t) != len(self.iterators): raise StopIteration
+        return self.function(*t)
+
+    def __new__(cls, *args):
+        return object.__new__(cls)
 
 # this is zip with strict=False
 def zip(*iterables: Tuple[Iterable[Any]]):
