@@ -64,15 +64,19 @@ class _map_multiple(map):
     def __new__(cls, *args):
         return object.__new__(cls)
 
-# this is zip with strict=False
-def zip(*iterables: Tuple[Iterable[Any]]):
-    iterators = tuple(map(lambda it: iter(it), iterables))
+class zip(generator):
 
-    while True:
-        t = tuple(map(next, iterators))
-        if len(t) != len(iterators):
-            return
-        yield t
+    def __init__(self, *iterables: Tuple[Iterable[Any]], strict=False):
+        self.iterators = tuple(_map_single(iter, iterables))
+        self.strict = strict
+    
+    def __next__(self):
+        t = tuple(map(next, self.iterators))
+        if len(t) != len(self.iterators):
+            if self.strict: 
+                raise ValueError(f'{self.__class__.__name__} argument {len(t) + 2} is longer than argument {len(t) + 1}')
+            raise StopIteration
+        return t
 
 def reduce(function: Callable[[T], Any], iterable: Iterable[T], initial: T | None = None):
     iterator = iter(iterable)
@@ -103,6 +107,13 @@ def flatten(iterable: Iterable[Any]):
             yield item
 
 print(list(filter(lambda x: x >= 0, range(-15, 15))))
+
 print(list(map(lambda x: x ** 2, range(0, 10))))
+
 print(list(zip(range(5), range(0, 10, 2))))
+try:
+    list(zip(range(5), range(6), strict=True))
+except ValueError as e:
+    print('strict exception caught, message: ' + str(e))
+
 print(list(map(lambda x, y: (x,y), range(5), range(0, 10, 2))))
