@@ -10,9 +10,9 @@ from typing import (
 
 T = TypeVar('T')
 
-class generator(Iterator):
-    def __iter__(self): return self
-    # def __next__(self): ... 
+from flatten import flatten
+
+from generator import generator
 
 class filter(generator):
 
@@ -98,13 +98,6 @@ def accumulate(function: Callable[[T], Any], iterable: Iterable[T], initial: T |
     for item in iterator:
         res = function(res, item)
         yield res
-
-def flatten(iterable: Iterable[Any]):
-    for item in iterable:
-        if isinstance(item, Iterable):
-            yield from item
-        else:
-            yield item
 
 print(list(filter(lambda x: x >= 0, range(-15, 15))))
 
