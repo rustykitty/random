@@ -28,3 +28,20 @@ class AttrDict(dict):
     
     def __deepcopy__(self, memo):
         return AttrDict(super().__deepcopy__(memo))
+
+    def __ior__(self, other):
+        if not isinstance(other, dict): return NotImplemented
+        self.update(other)
+        return self
+    
+    def __or__(self, other):
+        if not isinstance(other, dict): return NotImplemented
+        res = AttrDict(self)
+        res.update(other)
+        return res
+
+    def __ror__(self, other):
+        if not isinstance(other, dict): return NotImplemented
+        res = AttrDict(other)
+        res.update(self)
+        return res
