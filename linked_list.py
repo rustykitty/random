@@ -24,10 +24,6 @@ class LinkedList(Generic[T]):
             self.prev = prev
             self.next = next
 
-        def link(self, other: LinkedList.Node):
-            self.next = other.prev
-            self.prev = other.next
-
     def __init__(self, iterable: Iterable[T] = None):
         self.head = self.Node()
         self.tail = self.Node()
@@ -128,8 +124,10 @@ class LinkedList(Generic[T]):
         return node.val
 
     def reverse(self):
-        # TODO
-        pass
+        for (i, j) in zip(self._node_iter(), self._node_reversed_iter()):
+            if i.prev is j: break
+            if i is j: break
+            i.val, j.val = j.val, i.val
 
     def rotate(self, n=1):
         if not self: return
