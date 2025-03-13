@@ -121,6 +121,7 @@ class LinkedList(Generic[T]):
         next = node.next
         prev.next = next
         next.prev = prev
+        self.length -= 1
         return node.val
 
     def reverse(self):
