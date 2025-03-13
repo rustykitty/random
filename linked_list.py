@@ -52,6 +52,12 @@ class LinkedList(Generic[T]):
 
     def __contains__(self, item: T): return item in iter(self)
 
+    def __getitem__(self, index: int):
+        return self._get_node_by_index(index).val
+
+    def __setitem__(self, index: int, val: T):
+        self._get_node_by_index(index).val = val
+
     def append(self, item: T):
         return self._insert_node(self.tail.prev, self.Node(item))
 
@@ -139,9 +145,9 @@ class LinkedList(Generic[T]):
         if not (-self.length <= index < self.length):
             raise IndexError(f"{self.__class__.__name__} index out of range")
         if index < 0:
-            return next(self._node_reversed_iter, ~index, (~index) + 1)
+            return next(islice(self._node_reversed_iter(), ~index, (~index) + 1))
         else:
-            return next(self._node_iter, index, index + 1)
+            return next(islice(self._node_iter(), index, index + 1))
     
     def _node_iter(self) -> Generator[Node]:
         node: LinkedList.Node = self.head.next
