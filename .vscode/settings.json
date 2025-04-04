@@ -2,6 +2,11 @@
     "files.associations": {
         "cstdarg": "cpp",
         "__config": "cpp",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "array": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp"
     }
 }
