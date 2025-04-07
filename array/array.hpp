@@ -17,14 +17,21 @@ namespace rustykitty {
     class array {
     private:
         T* const _data;
+
+        void allocate_array(size_t length) {
+            _data = static_cast<T*>(::operator new(length * sizeof(T)));
+        }
+
     public:
         typedef T value_type;
         typedef T& reference;
         typedef const T& const_reference;
         typedef T* pointer;
         typedef const T* const_pointer;
-        typedef std::reverse_iterator<T*> reverse_iterator;
-        typedef std::reverse_iterator<const T*> const_reverse_iterator;
+        typedef T* iterator;
+        typedef const T* const_iterator;
+        typedef std::reverse_iterator<iterator> reverse_iterator;
+        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
         typedef size_t size_type;
         typedef ptrdiff_t difference_t; 
 
@@ -38,7 +45,10 @@ namespace rustykitty {
          * @param length The length of the array.
          */
         explicit array(size_type length) noexcept : length(length) {
-            _data = new T[length]{};
+            allocate_array(length);
+            for (size_type i = 0; i < length; i++) {
+                new (_data + i) T;
+            }
         }
 
         /**
@@ -49,7 +59,8 @@ namespace rustykitty {
          * @param length The length of the array.
          * @param val The value to fill the container with.
          */
-        explicit array(size_type length, T& val) : array(length) {
+        explicit array(size_type length, T& val) {
+            allocate_array(length);
             std::fill(_data, _data + length, val);
         }
 
@@ -58,7 +69,8 @@ namespace rustykitty {
          * 
          * @param other The array to copy.
          */
-        array(const array<T>& other) noexcept : array(other.length){
+        array(const array<T>& other) noexcept {
+            allocate_array(other.length);
             std::copy(other.begin(), other.end(), _data);
         }
 
@@ -68,8 +80,9 @@ namespace rustykitty {
          * @param arr The C-style array
          * @param length The length of the array
          */
-        explicit array(T* arr, size_type length) noexcept : array(length) {
-            memcpy(_data, arr, length * sizeof(T));
+        explicit array(T* arr, size_type length) noexcept {
+            allocate_array(length);
+            std::copy(_data, _data + length, arr);
         }
 
         /**
@@ -77,7 +90,8 @@ namespace rustykitty {
          * 
          * @param list The initializer list
          */
-        array(std::initializer_list<T> list) : array(list.size()) {
+        array(std::initializer_list<T> list) {
+            allocate_array(list.size);
             std::copy(list.begin(), list.end(), _data);
         }
 
@@ -88,12 +102,16 @@ namespace rustykitty {
          * @param last The iterator one past the end of the range
          */
         template<class InputIterator>
-        array(InputIterator first, InputIterator last) : array(std::distance(first, last)) {
+        array(InputIterator first, InputIterator last) {
+            allocate_array(std::distance(first, last));
             std::copy(first, last, _data);
         }
 
         ~array() noexcept {
-            delete[] _data;
+            for (size_type i = 0; i < length; i++) {
+                _data[i].~T();
+            }
+            ::operator delete(_data);
         }
 
         /**
@@ -215,10 +233,14 @@ namespace rustykitty {
          */
         const_pointer data() const noexcept { return _data; }
 
-        pointer begin() { return _data; } /// Return an iterator to beginning of array
-        pointer end() { return _data + length; } /// Return an iterator past the end of array
-        const_pointer begin() const { return _data; } /// Return an iterator to beginning of array
-        const_pointer end() const { return _data + length; } /// Return an iterator past the end of array
+        iterator begin() { return _data; } 
+        iterator end() { return _data + length; } 
+        const_iterator cbegin() const { return _data; } 
+        const_iterator cend() const { return _data + length; } 
+        reverse_iterator rbegin() { return reverse_iterator(end()); } 
+        reverse_iterator rend() { return reverse_iterator(begin()); }
+        const_reverse_iterator crbegin() const { return const_reverse_iterator(cend()); }
+        const_reverse_iterator crend() const { return const_reverse_iterator(cbegin()); }
 
         bool operator==(const array<T>& other) const noexcept {
             if (this == &other)
@@ -233,30 +255,6 @@ namespace rustykitty {
                 }
             }
             return true;
-        }
-
-        class iterator : public std::iterator<std::random_access_iterator_tag, T> {
-        private:
-            T* p;
-        public:
-            iterator(T* p) : p(p) {}
-            iterator(const iterator& other) : p(other.p) {}
-            iterator& operator++() { p++; return *this; }
-            iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
-            iterator& operator--() { p--; return *this; }
-            iterator operator--(int) { iterator tmp(*this); operator--(); return tmp; }
-            iterator& operator+=(difference_t n) { p += n; return *this; }
-            iterator operator+(difference_t n) const { return iterator(p + n); }
-            iterator& operator-=(difference_t n) { p -= n; return *this; }
-            iterator operator-(difference_t n) const { return iterator(p - n); }
-            difference_t operator-(const iterator& other) const { return p - other.p; }
-            T& operator*() { return *p; }
-            T* operator->() { return p; }
-            T& operator[](difference_t n) { return p[n]; }
-            bool operator==(const iterator& other) const { return p == other.p; }
-            bool operator!=(const iterator& other) const { return p != other.p; }
-            bool operator<(const iterator& other) const { return p < other.p; }
-            bool operator>(const iterator& other) const { return p > other.p; }
         }
     };
 }
