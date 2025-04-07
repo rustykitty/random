@@ -3,6 +3,7 @@
         "cstdarg": "cpp",
         "__config": "cpp",
         "stdexcept": "cpp",
+        "memory": "cpp",
         "array": "cpp",
         "functional": "cpp",
         "tuple": "cpp",

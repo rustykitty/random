@@ -6,21 +6,25 @@
 #include <string>
 #include <utility>
 #include <sstream>
+#include <iterator>
+#include <memory>
 
 namespace rustykitty {
     /**
      * A fixed-length array class inspired by std::vector and the `length` attribute of Java arrays.
      */
-    template <class T>
+    template <class T, class allocator_type=std::allocator<T> >
     class array {
     private:
-        T* _data;
+        T* const _data;
     public:
         typedef T value_type;
         typedef T& reference;
         typedef const T& const_reference;
         typedef T* pointer;
         typedef const T* const_pointer;
+        typedef std::reverse_iterator<T*> reverse_iterator;
+        typedef std::reverse_iterator<const T*> const_reverse_iterator;
         typedef size_t size_type;
         typedef ptrdiff_t difference_t; 
 
@@ -46,9 +50,7 @@ namespace rustykitty {
          * @param val The value to fill the container with.
          */
         explicit array(size_type length, T& val) : array(length) {
-            for (size_type i = 0; i < length; i++) {
-                _data[i] = val;
-            }
+            std::fill(_data, _data + length, val);
         }
 
         /**
@@ -57,7 +59,7 @@ namespace rustykitty {
          * @param other The array to copy.
          */
         array(const array<T>& other) noexcept : array(other.length){
-            memcpy(_data, other._data, length * sizeof(T));
+            std::copy(other.begin(), other.end(), _data);
         }
 
         /**
