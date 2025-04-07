@@ -8,7 +8,7 @@ from typing import (
     Generator
 )
 
-from itertools import islice
+from itertools import islice, chain, repeat
 
 T = TypeVar("T")
 
@@ -157,3 +157,35 @@ class LinkedList(Generic[T]):
         while node != self.head:
             yield node
             node = node.prev
+
+    def __add__(self, other: LinkedList) -> LinkedList:
+        if not isinstance(other, LinkedList):
+            return NotImplemented
+        return LinkedList(chain(self, other))
+    
+    def __iadd__(self, other: LinkedList) -> LinkedList:
+        if not isinstance(other, LinkedList):
+            return NotImplemented
+        self.extend(other)
+        return self
+
+    def __mul__(self, n: int) -> LinkedList:
+        if not isinstance(n, int):
+            return NotImplemented
+        if n < 0:
+            """
+            Python 3.13 behavior:
+                >>> [1, 2] * -1
+                []
+            """
+            return LinkedList()
+        return LinkedList(chain.from_iterable(repeat(self, n)))
+    
+    def __imul__(self, n: int) -> LinkedList:
+        if not isinstance(n, int):
+            return NotImplemented
+        if n < 0:
+            self.clear()
+            return self
+        self.extend(repeat(self, n - 1))
+        return self
