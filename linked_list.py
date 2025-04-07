@@ -65,8 +65,7 @@ class LinkedList(Generic[T]):
         return self._insert_node(self.head, self.Node(item))
 
     def _insert_node(self, pos: Node, node: Node):
-        if pos == self.tail:
-            raise ValueError("cannot _insert after tail")
+        assert pos is not self.tail, "cannot insert after tail"
         next = pos.next
         node.prev = pos
         node.next = next
@@ -119,10 +118,8 @@ class LinkedList(Generic[T]):
         raise IndexError(f"{item} is not in {self.__class__.__name__}")
 
     def _remove(self, node: Node) -> T:
-        if node == self.head:
-            raise ValueError("cannot remove head")
-        elif node == self.tail:
-            raise ValueError("cannot remove tail")
+        assert node is not self.head, "cannot remove head"
+        assert node is not self.tail, "cannot remove tail"
         prev = node.prev
         next = node.next
         prev.next = next
