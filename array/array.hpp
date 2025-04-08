@@ -8,6 +8,7 @@
 #include <sstream>
 #include <iterator>
 #include <memory>
+#include <type_traits>
 
 namespace rustykitty {
     /**
@@ -18,8 +19,11 @@ namespace rustykitty {
     private:
         T* const _data;
 
-        void allocate_array(size_t length) {
-            _data = static_cast<T*>(::operator new(length * sizeof(T)));
+        /**
+         * Allocates unitialized memory.
+         */
+        T* allocate_array(size_t length) {
+            return static_cast<T*>(::operator new(length * sizeof(T)));
         }
 
     public:
@@ -44,12 +48,7 @@ namespace rustykitty {
          * 
          * @param length The length of the array.
          */
-        explicit array(size_type length) noexcept : length(length) {
-            allocate_array(length);
-            for (size_type i = 0; i < length; i++) {
-                new (_data + i) T;
-            }
-        }
+        explicit array(size_type length) noexcept : length(length), _data(new T[length]) { }
 
         /**
          * Value fill constructor.
@@ -59,8 +58,7 @@ namespace rustykitty {
          * @param length The length of the array.
          * @param val The value to fill the container with.
          */
-        explicit array(size_type length, T& val) {
-            allocate_array(length);
+        explicit array(size_type length, T& val) : length(length), _data(allocate_array(length)) {
             std::fill(_data, _data + length, val);
         }
 
@@ -69,9 +67,8 @@ namespace rustykitty {
          * 
          * @param other The array to copy.
          */
-        array(const array<T>& other) noexcept {
-            allocate_array(other.length);
-            std::copy(other.begin(), other.end(), _data);
+        array(const array<T>& other) noexcept : _data(allocate_array(other.length)) {
+            std::uninitialized_copy(other.begin(), other.end(), _data);
         }
 
         /**
@@ -80,9 +77,8 @@ namespace rustykitty {
          * @param arr The C-style array
          * @param length The length of the array
          */
-        explicit array(T* arr, size_type length) noexcept {
-            allocate_array(length);
-            std::copy(_data, _data + length, arr);
+        explicit array(T* arr, size_type length) noexcept : _data(allocate_array(length)) {
+            std::uninitialized_copy(_data, _data + length, arr);
         }
 
         /**
@@ -92,7 +88,7 @@ namespace rustykitty {
          */
         array(std::initializer_list<T> list) {
             allocate_array(list.size);
-            std::copy(list.begin(), list.end(), _data);
+            std::uninitialized_copy(list.begin(), list.end(), _data);
         }
 
         /**
@@ -102,14 +98,15 @@ namespace rustykitty {
          * @param last The iterator one past the end of the range
          */
         template<class InputIterator>
-        array(InputIterator first, InputIterator last) {
-            allocate_array(std::distance(first, last));
-            std::copy(first, last, _data);
+        array(InputIterator first, InputIterator last) _data(allocate_array(std::distance(first, last));) {
+            std::uninitialized_copy(first, last, _data);
         }
 
         ~array() noexcept {
-            for (size_type i = 0; i < length; i++) {
-                _data[i].~T();
+            if constexpr (!std::is_trivially_destructible_v<T>) {
+                for (size_type i = 0; i < length; i++) {
+                    _data[i].~T();
+                }
             }
             ::operator delete(_data);
         }
