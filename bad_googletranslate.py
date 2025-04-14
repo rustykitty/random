@@ -1,3 +1,9 @@
+"""
+Example from Codespaces:
+$ python /workspaces/random/bad_googletranslate.py 'Hello world! I am posting this script on GitHub!' -l es -l zh -l ja -l es -l hi
+hello World! I Yes Destination it Written Hui Story Existence Technology You B!
+"""
+
 # based on code written by copilot
 
 import argparse
